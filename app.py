@@ -14,29 +14,27 @@ load_dotenv()
 
 
 machine = TocMachine(
-    states=["user", "state1", "state2"],
+    states=["home", "update", "title"],
     transitions=[
         {
             "trigger": "advance",
-            "source": "user",
-            "dest": "state1",
-            "conditions": "is_going_to_state1",
+            "source": "home",
+            "dest": "update",
+            "conditions": "is_going_to_update",
         },
         {
             "trigger": "advance",
-            "source": "user",
-            "dest": "state2",
-            "conditions": "is_going_to_state2",
+            "source": "update",
+            "dest": "title",
+            "conditions": "is_going_to_title",
         },
         {
-            "trigger": "advance",
-            "source": ["state1", "state2"],
-            "dest": "user",
-            "conditions": "home",
+            "trigger": "go_back",
+            "source": ["update", "title"],
+            "dest": "home",
         },
-        #{"trigger": "go_back", "source": ["state1", "state2"], "dest": "user"},
     ],
-    initial="user",
+    initial="home",
     auto_transitions=False,
     show_conditions=True,
 )
@@ -107,10 +105,11 @@ def webhook_handler():
         if not isinstance(event.message.text, str):
             continue
         print(f"\nFSM STATE: {machine.state}")
-        print(f"REQUEST BODY: \n{body}")
+        #print(f"REQUEST BODY: \n{body}")
         response = machine.advance(event)
+        print(f"FSM STATE: {machine.state}")
         if response == False:
-            send_text_message(event.reply_token, "Not Entering any State")
+            send_text_message(event.reply_token, "Input unrecognized. Re-check your spelling")
 
     return "OK"
 

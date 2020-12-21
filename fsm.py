@@ -1,46 +1,35 @@
 from transitions.extensions import GraphMachine
-
 from utils import send_text_message
-
 
 class TocMachine(GraphMachine):
     def __init__(self, **machine_configs):
         self.machine = GraphMachine(model=self, **machine_configs)
 
-    def is_going_to_state1(self, event):
+# =================================================================
+# Update state
+
+    def is_going_to_update(self, event):
         text = event.message.text
-        return text.lower() == "go to state1"
+        return text.lower() == "update"
 
-    def is_going_to_state2(self, event):
+    def on_enter_update(self, event):
+        print("Enter update state")
+        reply_token = event.reply_token
+        send_text_message(reply_token, "Type in anime you want to look up")
+
+# =================================================================
+# Title state
+
+    def is_going_to_title(self, event):
         text = event.message.text
-        return text.lower() == "go to state2"
+        return True
 
-    def home(self, event):
+    def on_enter_title(self, event):
         text = event.message.text
-        return text.lower() == "exit"
-
-    def on_enter_state1(self, event):
-        print("I'm entering state1")
-
-        reply_token = event.reply_token
-        send_text_message(reply_token, "Trigger state1")
-        #self.go_back()
-
-    def on_exit_state1(self, event):
-        print("Leaving state1")
-
-        reply_token = event.reply_token
-        send_text_message(reply_token, "back home")
-
-    def on_enter_state2(self, event):
-        print("I'm entering state2")
-
-        reply_token = event.reply_token
-        send_text_message(reply_token, "Trigger state2")
-        #self.go_back()
-
-    def on_exit_state2(self, event):
-        print("Leaving state2")
-
-        reply_token = event.reply_token
-        send_text_message(reply_token, "back from state 2")
+        if(text.lower() == "exit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Reset")
+            self.go_back()
+        else:
+            reply_token = event.reply_token
+            send_text_message(reply_token, "in title state: " + event.message.text)
