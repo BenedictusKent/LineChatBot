@@ -1,7 +1,7 @@
 from transitions.extensions import GraphMachine
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as soup
-from utils import send_text_message
+from utils import send_text_message, send_button_carousel
 
 class TocMachine(GraphMachine):
     def __init__(self, **machine_configs):
@@ -46,30 +46,43 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "Back to main")
             self.go_back()
         else:
-            text = text.replace(" ", "%20")
-            search_url = "https://myanimelist.net/search/all?q=" + text + "&cat=all"
+            url = text.replace(" ", "%20")
+            search_url = "https://myanimelist.net/search/all?q=" + url + "&cat=all"
             
-            # search in MyAnimeList
-            titles = ""
+            #### search in MyAnimeList
+            # request to open url
             req = Request(search_url, headers={'User-Agent': 'Mozilla/5.0'})
             client = urlopen(req)
             htmlpage = client.read()
             client.close()
+            # parse html and go to article tag
             wholepage = soup(htmlpage, "html.parser")
             articlepage = wholepage.article
+            # take useful info
+            img_url = []
+            title = []
+            link = []
+            images = []
             divs = articlepage.findAll("div", {"class": "list di-t w100"})      # num of searches
-            many = len(divs)
-            count = 1
             for div in divs:
+                img_url.append(div.div.a.img["data-src"]) 
                 second = div.find("div", {"class": "information di-tc va-t pt4 pl8"})
-                temp = second.a.text.strip()
-                titles += str(count) + ". " + temp
-                if(count < many):
-                    titles += "\n"
-                count += 1
-            
-            reply_token = event.reply_token
-            send_text_message(reply_token, titles)
+                title.append(second.a.text.strip())
+                link.append(second.a["href"])
+            # filter searches
+            for i in range(len(title)):
+                if text.lower() in title[i].lower():
+                    req = Request(link[i], headers={'User-Agent': 'Mozilla/5.0'})
+                    client = urlopen(req)
+                    htmlpage = client.read()
+                    client.close()
+                    specific = soup(htmlpage, "html.parser")
+                    imgtag = specific.find("img", {"alt": title[i]})
+                    images.append(str(imgtag["data-src"]))
+            print(len(images))
+
+            userid = event.source.user_id
+            send_button_carousel(userid, text, images, title, link)
 
 # =================================================================
 # Repeat state
