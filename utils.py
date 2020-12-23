@@ -15,28 +15,36 @@ def send_text_message(reply_token, text):
 
     return "OK"
 
-def send_button_carousel(id, user_text, img_url, anime_title, next_link):
+def send_button_carousel(id, user_text, img_url, anime_title, next_link, load):
     line_bot_api = LineBotApi(channel_access_token)
     
     cols = []
-    number = 1
-    for i in range(len(anime_title)):
-        if user_text.lower() in anime_title[i].lower():
-            temp = "Anime " + str(number)
-            cols.append(
-                CarouselColumn(
-                    thumbnail_image_url=img_url[number-1],
-                    title=temp,
-                    text=anime_title[i],
-                    actions=[
-                        MessageTemplateAction(
-                            label='Learn more',
-                            text='See anime ' + str(number)
-                        )
-                    ]
-                )
+    if(load == 0):
+        number = 0
+        if(len(anime_title) > 5):
+            end = 5
+        else:
+            end = len(anime_title)
+    else:
+        number = 5
+        end = len(anime_title)
+
+    for i in range(number, end):
+        temp = "Anime " + str(number+1)
+        cols.append(
+            CarouselColumn(
+                thumbnail_image_url=img_url[number],
+                title=temp,
+                text=anime_title[i],
+                actions=[
+                    MessageTemplateAction(
+                        label='Learn more',
+                        text=anime_title[i]
+                    )
+                ]
             )
-            number += 1
+        )
+        number += 1
 
     message = TemplateSendMessage(
         alt_text='Carousel template',
