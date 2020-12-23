@@ -1,11 +1,12 @@
 from transitions.extensions import GraphMachine
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as soup
-from utils import send_text_message, send_button_carousel
+from utils import send_text_message, send_button_carousel, send_button_message
 
 load = 0        # not loaded = 0, loaded = 0
 bubble = ""     # previous user input
 search = 0      # new search = 0, searched before = 1
+interest = 0    # which anime title the user interested in [start at 1]
 link = []       # link to specific title
 title = []      # all possible title
 img_url = []    # url of images
@@ -104,7 +105,6 @@ class TocMachine(GraphMachine):
                 else:
                     variable_reset()
                     bubble = str(text)
-            print(search)
             
             # search in MyAnimeList.net
             if(search == 0):
@@ -124,8 +124,7 @@ class TocMachine(GraphMachine):
     def on_enter_repeat(self, event):
         print("Enter repeat stage")
         reply_token = event.reply_token
-        send_text_message(reply_token, "repeating")
-
+        send_text_message(reply_token, "Type in anime you want to look up")
 
 # =================================================================
 # load_more state
@@ -140,3 +139,40 @@ class TocMachine(GraphMachine):
 
         userid = event.source.user_id
         send_button_carousel(userid, bubble, img_url, title, link, load)
+
+# =================================================================
+# prep state
+
+    def is_going_to_prep(self, event):
+        global interest
+        text = event.message.text
+        interest = int(text)
+        return text.isdigit() and interest < 10
+
+    def on_enter_prep(self, event):
+        global interest, img_url, title
+        label = ["Synopsis"]
+        chat = ["synopsis"]
+        image = img_url[interest]
+        name = title[interest]
+        userid = event.source.user_id
+        send_button_message(userid, image, name, label, chat)
+
+# =================================================================
+# synopsis state
+
+    def is_going_to_synopsis(self, event):
+        text = event.message.text
+        return text.lower() == "synopsis"
+
+    def on_enter_prep(self, event):
+        global interest, link
+        req = Request(link[interest], headers={'User-Agent': 'Mozilla/5.0'})
+        client = urlopen(req)
+        htmlpage = client.read()
+        client.close()
+        wholepage = soup(htmlpage, "html.parser")
+        paragraph = wholepage.find("p", {"itemprop": "description"})
+        paragraph = paragraph.text
+        reply_token = event.reply_token
+        send_text_message(reply_token, paragraph)

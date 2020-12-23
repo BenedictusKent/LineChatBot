@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup as soup
 from linebot import LineBotApi, WebhookParser
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.models import CarouselTemplate, MessageTemplateAction, TemplateSendMessage, CarouselColumn
-
+from linebot.models import ButtonsTemplate
 
 channel_access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
 
@@ -39,7 +39,7 @@ def send_button_carousel(id, user_text, img_url, anime_title, next_link, load):
                 actions=[
                     MessageTemplateAction(
                         label='Learn more',
-                        text=anime_title[i]
+                        text=str(number)
                     )
                 ]
             )
@@ -55,6 +55,31 @@ def send_button_carousel(id, user_text, img_url, anime_title, next_link, load):
 
     line_bot_api.push_message(id, message)
 
+    return "OK"
+
+def send_button_message(id, img_url, anime_title, label, chat):
+    line_bot_api = LineBotApi(channel_access_token)
+
+    acts = []
+    for i, lab in enumerate(label):
+        acts.append(
+            MessageTemplateAction(
+                label=lab,
+                text=chat[i]
+            )
+        )
+
+    message = TemplateSendMessage(
+        alt_text='Buttons template',
+        template=ButtonsTemplate(
+            thumbnail_image_url=str(img_url),
+            title=str(anime_title),
+            text="What do you want to see?",
+            actions=acts
+        )
+    )
+
+    line_bot_api.push_message(id, message)
     return "OK"
 
 """
