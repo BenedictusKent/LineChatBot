@@ -8,6 +8,7 @@ bubble = ""     # previous user input
 search = 0      # new search = 0, searched before = 1
 interest = 0    # which anime title the user interested in [start at 1]
 link = []       # link to specific title
+info = []       # info for specific anime title
 title = []      # all possible title
 img_url = []    # url of images
 
@@ -17,6 +18,7 @@ def variable_reset():
     bubble = ""
     search = 0
     link.clear()
+    info.clear()
     title.clear()
     img_url.clear()
 
@@ -46,6 +48,23 @@ def anime_search(chat, search_url):
         specific = soup(htmlpage, "html.parser")
         imgtag = specific.find("img", {"alt": title[i]})
         img_url.append(str(imgtag["data-src"]))
+
+def anime_info():
+    global link, interest
+
+    # request to open url
+    req = Request(link[interest], headers={'User-Agent': 'Mozilla/5.0'})
+    client = urlopen(req)
+    htmlpage = client.read()
+    client.close()
+    # parse html and take all info
+    wholepage = soup(htmlpage, "html.parser")
+    left = wholepage.find("div", {"style": "width: 225px"})
+    for spantag in left.findAll("span", {"class": "dark_text"}):
+        info.append(str(spantag.text.strip()))
+        temp = str(spantag.next_sibling.strip())
+        if temp:
+            info.append(temp)
 
 class TocMachine(GraphMachine):
     def __init__(self, **machine_configs):
@@ -151,8 +170,8 @@ class TocMachine(GraphMachine):
 
     def on_enter_prep(self, event):
         global interest, img_url, title
-        label = ["Synopsis"]
-        chat = ["synopsis"]
+        label = ["Synopsis", "Status", "Schedule"]
+        chat = ["synopsis", "status", "schedule"]
         image = img_url[interest]
         name = title[interest]
         userid = event.source.user_id
@@ -165,7 +184,7 @@ class TocMachine(GraphMachine):
         text = event.message.text
         return text.lower() == "synopsis"
 
-    def on_enter_prep(self, event):
+    def on_enter_synopsis(self, event):
         global interest, link
         req = Request(link[interest], headers={'User-Agent': 'Mozilla/5.0'})
         client = urlopen(req)
@@ -176,3 +195,55 @@ class TocMachine(GraphMachine):
         paragraph = paragraph.text
         reply_token = event.reply_token
         send_text_message(reply_token, paragraph)
+
+# =================================================================
+# schedule state
+
+    def is_going_to_schedule(self, event):
+        text = event.message.text
+        return text.lower() == "schedule"
+
+    def on_enter_schedule(self, event):
+        global interest, link, info
+
+        # if info not searched before, then search
+        if not info:
+            anime_info()
+
+        # look for appropriate item
+        sched = "No data found"
+        for i in range(len(info)):
+            if(info[i] == "Broadcast:"):
+                sched = info[i+1]
+                break
+
+        # message
+        reply_token = event.reply_token
+        send_text_message(reply_token, sched)
+
+# =================================================================
+# status state
+
+    def is_going_to_status(self, event):
+        text = event.message.text
+        return text.lower() == "status"
+
+    def on_enter_status(self, event):
+        global interest, link, info
+
+        # if info not searched before, then search
+        if not info:
+            anime_info()
+
+        # look for appropriate item
+        for i in range(len(info)):
+            if(info[i] == "Status:"):
+                if ":" in info[i+1]:
+                    status = "No data found"
+                else:
+                    status = info[i+1]
+                break
+
+        # message
+        reply_token = event.reply_token
+        send_text_message(reply_token, status)
