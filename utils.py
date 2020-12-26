@@ -69,15 +69,25 @@ def send_button_message(id, img_url, anime_title, label, chat):
             )
         )
 
-    message = TemplateSendMessage(
+    if(len(anime_title) > 39):
+        message = TemplateSendMessage(
         alt_text='Buttons template',
         template=ButtonsTemplate(
             thumbnail_image_url=str(img_url),
-            title=str(anime_title),
-            text="What do you want to see?",
+            text=str(anime_title),
             actions=acts
         )
     )
+    else:
+        message = TemplateSendMessage(
+            alt_text='Buttons template',
+            template=ButtonsTemplate(
+                thumbnail_image_url=str(img_url),
+                title=str(anime_title),
+                text="What do you want to see?",
+                actions=acts
+            )
+        )
 
     line_bot_api.push_message(id, message)
     return "OK"
