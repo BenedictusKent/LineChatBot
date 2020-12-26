@@ -30,15 +30,12 @@ def anime_search(chat, search_url):
     client = urlopen(req)
     htmlpage = client.read()
     client.close()
-    # parse html and go to article tag
+    # parse html and take useful info
     wholepage = soup(htmlpage, "html.parser")
-    articlepage = wholepage.article
-    # take useful info
-    divs = articlepage.findAll("div", {"class": "list di-t w100"})      # num of searches
-    for div in divs:
-        second = div.find("div", {"class": "information di-tc va-t pt4 pl8"})
-        title.append(second.a.text.strip())
-        link.append(second.a["href"])
+    divs = wholepage.findAll("div", {"class": "information di-tc va-t pt4 pl8"})      # num of searches
+    for i in range(len(divs)):
+        title.append(divs[i].a.text.strip())
+        link.append(divs[i].a["href"])
     # better picture of filtered search
     for i in range(len(title)):
         req = Request(link[i], headers={'User-Agent': 'Mozilla/5.0'})
@@ -112,7 +109,7 @@ class TocMachine(GraphMachine):
         else:
             url = text.lower().replace(" ", "%20")
             search_url = "https://myanimelist.net/search/all?q=" + url + "&cat=all"
-            
+
             # check if user input has been checked previously
             global search, title, load, link, img_url, bubble
             if not bubble:
@@ -150,7 +147,7 @@ class TocMachine(GraphMachine):
 
     def is_going_to_load(self, event):
         text = event.message.text
-        return text.lower() == "more"
+        return text.lower() == "more" or text.lower() == "load"
 
     def on_enter_load(self, event):
         global bubble, img_url, title, link, load
@@ -160,15 +157,30 @@ class TocMachine(GraphMachine):
         send_button_carousel(userid, bubble, img_url, title, link, load)
 
 # =================================================================
-# prep state
+# goto info state
 
-    def is_going_to_prep(self, event):
+    def is_going_to_repeatinfo(self, event):
+        text = event.message.text
+        return text.lower() == "info"
+
+    def on_enter_repeatinfo(self, event):
+        global interest
+        print("Enter repeat info stage")
+        command = "Type " + str(interest) + " to back to info state"
+        reply_token = event.reply_token
+        send_text_message(reply_token, command)
+        #self.go_info()
+
+# =================================================================
+# info state
+
+    def is_going_to_info(self, event):
         global interest
         text = event.message.text
         interest = int(text)
         return text.isdigit() and interest < 10
 
-    def on_enter_prep(self, event):
+    def on_enter_info(self, event):
         global interest, img_url, title
         label = ["Synopsis", "Status", "Schedule"]
         chat = ["synopsis", "status", "schedule"]
