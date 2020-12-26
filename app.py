@@ -14,8 +14,8 @@ load_dotenv()
 
 
 machine = TocMachine(
-    states=["main", "update", "title", "quit", "repeat", "load", "prep", "synopsis",
-            "schedule", "status"],
+    states=["main", "update", "title", "quit", "repeat", "load", "info", "synopsis",
+            "schedule", "status", "repeatinfo"],
     transitions=[
         {
             "trigger": "advance",
@@ -33,66 +33,65 @@ machine = TocMachine(
             "trigger": "advance",
             "source": "title",
             "dest": "load",
-            "conditions": "is_going_to_load",
+            "conditions": "is_going_to_load",       # title to load
         },
         {
             "trigger": "advance",
             "source": "title",
             "dest": "quit",
-            "conditions": "is_going_to_quit",
+            "conditions": "is_going_to_quit",       # title can quit
         },
         {
             "trigger": "advance",
-            "source": "title",
+            "source": ["title", "load"],
             "dest": "repeat",
-            "conditions": "is_going_to_repeat",
-        },
-        {
-            "trigger": "advance",
-            "source": "load",
-            "dest": "repeat",
-            "conditions": "is_going_to_repeat",
+            "conditions": "is_going_to_repeat",     # title and load can repeat
         },
         {
             "trigger": "advance",
             "source": "repeat",
             "dest": "title",
-            "conditions": "is_going_to_title",
+            "conditions": "is_going_to_title",      # repeat to title 
         },
         {
             "trigger": "advance",
-            "source": "title",
-            "dest": "prep",
-            "conditions": "is_going_to_prep",
+            "source": ["title", "load"],
+            "dest": "info",
+            "conditions": "is_going_to_info",
         },
         {
             "trigger": "advance",
-            "source": "load",
-            "dest": "prep",
-            "conditions": "is_going_to_prep",
-        },
-        {
-            "trigger": "advance",
-            "source": "prep",
+            "source": "info",
             "dest": "synopsis",
             "conditions": "is_going_to_synopsis",
         },
         {
             "trigger": "advance",
-            "source": "prep",
+            "source": "info",
             "dest": "status",
             "conditions": "is_going_to_status",
         },
         {
             "trigger": "advance",
-            "source": "prep",
+            "source": "info",
             "dest": "schedule",
             "conditions": "is_going_to_schedule",
+        },
+        {
+            "trigger": "advance",
+            "source": ["schedule", "status", "synopsis"],
+            "dest": "repeatinfo",
+            "conditions": "is_going_to_repeatinfo",
         },
         {
             "trigger": "go_back",
             "source": ["update", "title"],
             "dest": "main",
+        },
+        {
+            "trigger": "go_info",
+            "source": ["synopsis", "schedule", "status"],
+            "dest": "prep",
         },
     ],
     initial="main",
