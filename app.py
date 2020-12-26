@@ -14,18 +14,24 @@ load_dotenv()
 
 
 machine = TocMachine(
-    states=["main", "update", "title", "quit", "repeat", "load", "info", "synopsis",
-            "schedule", "status", "repeatinfo"],
+    states=["main", "search", "title", "quit", "repeat", "load", "info", "synopsis",
+            "schedule", "status", "repeatinfo", "upcoming"],
     transitions=[
         {
             "trigger": "advance",
             "source": "main",
-            "dest": "update",
-            "conditions": "is_going_to_update",
+            "dest": "search",
+            "conditions": "is_going_to_search",
         },
         {
             "trigger": "advance",
-            "source": "update",
+            "source": "main",
+            "dest": "upcoming",
+            "conditions": "is_going_to_upcoming",
+        },
+        {
+            "trigger": "advance",
+            "source": "search",
             "dest": "title",
             "conditions": "is_going_to_title",
         },
@@ -37,7 +43,7 @@ machine = TocMachine(
         },
         {
             "trigger": "advance",
-            "source": "title",
+            "source": ["title", "info"],
             "dest": "quit",
             "conditions": "is_going_to_quit",       # title can quit
         },
@@ -84,14 +90,15 @@ machine = TocMachine(
             "conditions": "is_going_to_repeatinfo",
         },
         {
-            "trigger": "go_back",
-            "source": ["update", "title"],
-            "dest": "main",
+            "trigger": "advance",
+            "source": "repeatinfo",
+            "dest": "info",
+            "conditions": "is_going_to_info",
         },
         {
-            "trigger": "go_info",
-            "source": ["synopsis", "schedule", "status"],
-            "dest": "prep",
+            "trigger": "go_back",
+            "source": ["search", "title", "info"],
+            "dest": "main",
         },
     ],
     initial="main",
