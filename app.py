@@ -14,8 +14,8 @@ load_dotenv()
 
 
 machine = TocMachine(
-    states=["main", "search", "title", "quit", "repeat", "load", "info", "synopsis",
-            "schedule", "status", "repeatinfo", "upcoming"],
+    states=["main", "search", "title", "repeat", "load", "info", "synopsis",
+            "schedule", "status", "repeatinfo", "upcoming", "moreupcoming"],
     transitions=[
         {
             "trigger": "advance",
@@ -31,6 +31,18 @@ machine = TocMachine(
         },
         {
             "trigger": "advance",
+            "source": "upcoming",
+            "dest": "moreupcoming",
+            "conditions": "is_going_to_moreupcoming",
+        },
+        {
+            "trigger": "advance",
+            "source": "moreupcoming",
+            "dest": "moreupcoming",
+            "conditions": "is_going_to_moreupcoming",
+        },
+        {
+            "trigger": "advance",
             "source": "search",
             "dest": "title",
             "conditions": "is_going_to_title",
@@ -40,12 +52,6 @@ machine = TocMachine(
             "source": "title",
             "dest": "load",
             "conditions": "is_going_to_load",       # title to load
-        },
-        {
-            "trigger": "advance",
-            "source": ["title", "info"],
-            "dest": "quit",
-            "conditions": "is_going_to_quit",       # title can quit
         },
         {
             "trigger": "advance",
@@ -97,7 +103,8 @@ machine = TocMachine(
         },
         {
             "trigger": "go_back",
-            "source": ["search", "title", "info"],
+            "source": ["search", "info", "moreupcoming", "status", "schedule",
+                        "synopsis", "repeatinfo", "load", "repeat", "title"],
             "dest": "main",
         },
     ],
