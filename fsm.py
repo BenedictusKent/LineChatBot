@@ -231,10 +231,11 @@ class TocMachine(GraphMachine):
     def is_going_to_info(self, event):
         global interest, from_upcoming, upcoming_interest, from_search
         text = event.message.text
-        if(from_upcoming == 1):
-            upcoming_interest = int(text)
-        elif(from_search == 1):
-            interest = int(text)
+        if(text.lower() != "quit"):
+            if(from_upcoming == 1):
+                upcoming_interest = int(text)
+            elif(from_search == 1):
+                interest = int(text)
         return (text.isdigit() and interest < 10) or text.lower() == "quit"
 
     def on_enter_info(self, event):
@@ -253,7 +254,6 @@ class TocMachine(GraphMachine):
                 url = upcoming_link[upcoming_interest]
                 url = quote(url.encode("unicode-escape"))
                 url = unquote(url)
-                print(url)
                 req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
                 client = urlopen(req)
                 htmlpage = client.read()
