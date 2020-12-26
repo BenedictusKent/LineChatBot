@@ -1,20 +1,25 @@
 from transitions.extensions import GraphMachine
 from urllib.request import Request, urlopen
+from urllib.parse import quote, unquote
 from bs4 import BeautifulSoup as soup
 from utils import send_text_message, send_button_carousel, send_button_message
 
-load = 0        # not loaded = 0, loaded = 0
-bubble = ""     # previous user input
-search = 0      # new search = 0, searched before = 1
-interest = 0    # which anime title the user interested in [start at 1]
-link = []       # link to specific title
-info = []       # info for specific anime title
-title = []      # all possible title
-img_url = []    # url of images
+load = 0                # not loaded = 0, loaded = 0
+bubble = ""             # previous user input
+search = 0              # new search = 0, searched before = 1
+interest = 0            # which anime title the user interested in [start at 1]
+link = []               # link to specific title
+info = []               # info for specific anime title
+title = []              # all possible title
+img_url = []            # url of images
+from_search = -1
 
 upcoming_title = []
 upcoming_link = []
-upcoming_load = 0
+upcoming_info = []
+upcoming_more = 0
+upcoming_interest = -1
+from_upcoming = -1
 
 def variable_reset():
     global load, bubble, search, link, title, img_url
@@ -50,22 +55,31 @@ def anime_search(chat, search_url):
         imgtag = specific.find("img", {"alt": title[i]})
         img_url.append(str(imgtag["data-src"]))
 
-def anime_info():
-    global link, interest
-
+def anime_info(search_url):
+    global from_upcoming, from_search
+    #global link, interest, info
     # request to open url
-    req = Request(link[interest], headers={'User-Agent': 'Mozilla/5.0'})
+    req = Request(search_url, headers={'User-Agent': 'Mozilla/5.0'})
     client = urlopen(req)
     htmlpage = client.read()
     client.close()
     # parse html and take all info
     wholepage = soup(htmlpage, "html.parser")
     left = wholepage.find("div", {"style": "width: 225px"})
-    for spantag in left.findAll("span", {"class": "dark_text"}):
-        info.append(str(spantag.text.strip()))
-        temp = str(spantag.next_sibling.strip())
-        if temp:
-            info.append(temp)
+    if(from_search == 1):
+        global info
+        for spantag in left.findAll("span", {"class": "dark_text"}):
+            info.append(str(spantag.text.strip()))
+            temp = str(spantag.next_sibling.strip())
+            if temp:
+                info.append(temp)
+    elif(from_upcoming == 1):
+        global upcoming_info
+        for spantag in left.findAll("span", {"class": "dark_text"}):
+            upcoming_info.append(str(spantag.text.strip()))
+            temp = str(spantag.next_sibling.strip())
+            if temp:
+                upcoming_info.append(temp)
 
 def anime_upcoming():
     global upcoming_title, upcoming_link
@@ -92,6 +106,9 @@ class TocMachine(GraphMachine):
 
     def is_going_to_search(self, event):
         text = event.message.text
+        global from_search, from_upcoming
+        from_search = 1
+        from_upcoming = -1
         return text.lower() == "search" or text.lower() == "quit"
 
     def on_enter_search(self, event):
@@ -199,9 +216,12 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "Back to main")
             self.go_back()
         elif(text.lower() == "info"):
-            global interest
+            global interest, upcoming_interest, from_search, from_upcoming
             print("Enter repeat info stage")
-            command = "Type " + str(interest) + " to go back to info state"
+            if(from_search == 1):
+                command = "Type " + str(interest) + " to go back to info state"
+            elif(from_upcoming == 1):
+                command = "Type " + str(upcoming_interest) + " to go back to info state"
             reply_token = event.reply_token
             send_text_message(reply_token, command)
 
@@ -209,12 +229,16 @@ class TocMachine(GraphMachine):
 # info state
 
     def is_going_to_info(self, event):
-        global interest
+        global interest, from_upcoming, upcoming_interest, from_search
         text = event.message.text
-        interest = int(text)
+        if(from_upcoming == 1):
+            upcoming_interest = int(text)
+        elif(from_search == 1):
+            interest = int(text)
         return (text.isdigit() and interest < 10) or text.lower() == "quit"
 
     def on_enter_info(self, event):
+        global from_upcoming, from_search
         text = event.message.text
 
         if(text.lower() == "quit"):
@@ -222,13 +246,30 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "Back to main")
             self.go_back()
         else:
-            global interest, img_url, title
-            label = ["Synopsis", "Status", "Schedule"]
-            chat = ["synopsis", "status", "schedule"]
-            image = img_url[interest]
-            name = title[interest]
-            userid = event.source.user_id
-            send_button_message(userid, image, name, label, chat)
+            label = ["Synopsis", "Release","Status","Schedule"]
+            chat = ["synopsis", "release","status", "schedule"]
+            if(from_upcoming == 1):
+                global upcoming_title, upcoming_link, upcoming_interest
+                url = upcoming_link[upcoming_interest]
+                url = quote(url.encode("unicode-escape"))
+                url = unquote(url)
+                print(url)
+                req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                client = urlopen(req)
+                htmlpage = client.read()
+                client.close()
+                wholepage = soup(htmlpage, "html.parser")
+                div = wholepage.find("div", {"style": "text-align: center;"})
+                image = div.a.img["data-src"]
+                name = upcoming_title[upcoming_interest]
+                userid = event.source.user_id
+                send_button_message(userid, image, name, label, chat)
+            elif(from_search == 1):
+                global interest, img_url, title
+                image = img_url[interest]
+                name = title[interest]
+                userid = event.source.user_id
+                send_button_message(userid, image, name, label, chat)
 
 # =================================================================
 # synopsis state
@@ -245,11 +286,20 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "Back to main")
             self.go_back()
         elif(text.lower() == "synopsis"):
-            global interest, link
-            req = Request(link[interest], headers={'User-Agent': 'Mozilla/5.0'})
-            client = urlopen(req)
-            htmlpage = client.read()
-            client.close()
+            global from_upcoming, from_search
+            if(from_upcoming == 1):
+                global upcoming_link, upcoming_interest
+                url = upcoming_link[upcoming_interest]
+                req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                client = urlopen(req)
+                htmlpage = client.read()
+                client.close()
+            elif(from_search == 1):
+                global interest, link
+                req = Request(link[interest], headers={'User-Agent': 'Mozilla/5.0'})
+                client = urlopen(req)
+                htmlpage = client.read()
+                client.close()
             wholepage = soup(htmlpage, "html.parser")
             paragraph = wholepage.find("p", {"itemprop": "description"})
             paragraph = paragraph.text
@@ -271,18 +321,27 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "Back to main")
             self.go_back()
         elif(text.lower() == "schedule"):
-            global interest, link, info
-
-            # if info not searched before, then search
-            if not info:
-                anime_info()
-
-            # look for appropriate item
-            sched = "No data found"
-            for i in range(len(info)):
-                if(info[i] == "Broadcast:"):
-                    sched = info[i+1]
-                    break
+            global from_upcoming, from_search
+            if(from_upcoming == 1):
+                global upcoming_interest, upcoming_info, upcoming_link
+                if not upcoming_info:
+                    anime_info(upcoming_link[upcoming_interest])
+                sched = "No data found"
+                for i in range(len(upcoming_info)):
+                    if(upcoming_info[i] == "Broadcast:"):
+                        sched = upcoming_info[i+1]
+                        break
+            elif(from_search == 1):
+                global interest, link, info
+                # if info not searched before, then search
+                if not info:
+                    anime_info(link[interest])
+                # look for appropriate item
+                sched = "No data found"
+                for i in range(len(info)):
+                    if(info[i] == "Broadcast:"):
+                        sched = info[i+1]
+                        break
 
             # message
             reply_token = event.reply_token
@@ -303,50 +362,115 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "Back to main")
             self.go_back()
         elif(text.lower() == "status"):
-            global interest, link, info
-
-            # if info not searched before, then search
-            if not info:
-                anime_info()
-
-            # look for appropriate item
-            for i in range(len(info)):
-                if(info[i] == "Status:"):
-                    if ":" in info[i+1]:
-                        status = "No data found"
-                    else:
-                        status = info[i+1]
-                    break
+            global from_upcoming, from_search
+            if(from_upcoming == 1):
+                global upcoming_interest, upcoming_info, upcoming_link
+                if not upcoming_info:
+                    anime_info(upcoming_link[upcoming_interest])
+                for i in range(len(upcoming_info)):
+                    if(upcoming_info[i] == "Status:"):
+                        if ":" in upcoming_info[i+1]:
+                            status = "No data found"
+                        else:
+                            status = upcoming_info[i+1]
+                        break
+            elif(from_search == 1):
+                global interest, link, info
+                # if info not searched before, then search
+                if not info:
+                    anime_info(link[interest])
+                # look for appropriate item
+                for i in range(len(info)):
+                    if(info[i] == "Status:"):
+                        if ":" in info[i+1]:
+                            status = "No data found"
+                        else:
+                            status = info[i+1]
+                        break
 
             # message
             reply_token = event.reply_token
             send_text_message(reply_token, status)
 
 # =================================================================
+# date state
+
+    def is_going_to_date(self, event):
+        text = event.message.text
+        return text.lower() == "release" or text.lower() == "quit"
+
+    def on_enter_date(self, event):
+        text = event.message.text
+
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "release"):
+            global from_upcoming, from_search
+            if(from_upcoming == 1):
+                global upcoming_interest, upcoming_info, upcoming_link
+                if not upcoming_info:
+                    anime_info(upcoming_link[upcoming_interest])
+                
+                for i in range(len(upcoming_info)):
+                    if(upcoming_info[i] == "Aired:"):
+                        if ":" in upcoming_info[i+1]:
+                            date = "No data found"
+                        else:
+                            date = upcoming_info[i+1]
+                        break
+            elif(from_search == 1):
+                global interest, link, info
+                # if info not searched before, then search
+                print(interest, link[interest])
+                if not info:
+                    anime_info(link[interest])
+                print("passed here")
+                # look for appropriate item
+                for i in range(len(info)):
+                    if(info[i] == "Aired:"):
+                        if ":" in info[i+1]:
+                            date = "No data found"
+                        else:
+                            date = info[i+1]
+                        break
+
+            # message
+            reply_token = event.reply_token
+            send_text_message(reply_token, date)
+
+# =================================================================
 # top upcoming state
 
     def is_going_to_upcoming(self, event):
         text = event.message.text
+        global upcoming_more, upcoming_info, from_upcoming, from_search
+        upcoming_info.clear()
+        from_search = -1
+        from_upcoming = 1
+        if(upcoming_more != 0):
+            upcoming_more = 1
         return text.lower() == "upcoming"
 
     def on_enter_upcoming(self, event):
-        global upcoming_title, upcoming_load
+        global upcoming_title, upcoming_more
 
         # search if not searched before
-        if(upcoming_load == 0):
+        if(upcoming_more == 0):
             anime_upcoming()
-            upcoming_load = 1
+            upcoming_more = 1
 
         # show 10 titles each time and restart if reached the end
         text = ""
-        if(upcoming_load < 5):
-            end = upcoming_load * 10
+        if(upcoming_more < 5):
+            end = upcoming_more * 10
             start = end - 10
             for i in range(start, end):
                 text += str(i+1) + ". " + upcoming_title[i]
                 if(i < end-1):
                     text += "\n"
-            upcoming_load += 1
+            upcoming_more += 1
 
         # message
         reply_token = event.reply_token
@@ -367,21 +491,42 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "Back to main")
             self.go_back()
         elif(text.lower() == "more"):
-            global upcoming_title, upcoming_load
+            global upcoming_title, upcoming_more
 
             # show 10 titles each time and restart if reached the end
             text = ""
-            if(upcoming_load == 6):
-                upcoming_load = 1
-            if(upcoming_load < 6):
-                end = upcoming_load * 10
+            if(upcoming_more == 6):
+                upcoming_more = 1
+            if(upcoming_more < 6):
+                end = upcoming_more * 10
                 start = end - 10
                 for i in range(start, end):
                     text += str(i+1) + ". " + upcoming_title[i]
                     if(i < end-1):
                         text += "\n"
-                upcoming_load += 1
+                upcoming_more += 1
 
             # message
             reply_token = event.reply_token
             send_text_message(reply_token, text)
+
+# =================================================================
+# to info state
+
+    def is_going_to_infofromupcoming(self, event):
+        text = event.message.text
+        return text.lower() == "learn more" or text.lower() == "quit"
+
+    def on_enter_infofromupcoming(self, event):
+        text = event.message.text
+        
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "learn more"):
+            global from_upcoming
+            from_upcoming = 1
+            # message
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Which anime are you interested? [number-1]")
