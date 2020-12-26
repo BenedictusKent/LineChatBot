@@ -12,6 +12,10 @@ info = []       # info for specific anime title
 title = []      # all possible title
 img_url = []    # url of images
 
+upcoming_title = []
+upcoming_link = []
+upcoming_load = 0
+
 def variable_reset():
     global load, bubble, search, link, title, img_url
     load = 0
@@ -63,6 +67,22 @@ def anime_info():
         if temp:
             info.append(temp)
 
+def anime_upcoming():
+    global upcoming_title, upcoming_link
+
+    search_url = "https://myanimelist.net/topanime.php?type=upcoming"
+    # request to open url
+    req = Request(search_url, headers={'User-Agent': 'Mozilla/5.0'})
+    client = urlopen(req)
+    htmlpage = client.read()
+    client.close()
+    # parse html and take useful info
+    wholepage = soup(htmlpage, "html.parser")
+    a = wholepage.findAll("a", {"class": "hoverinfo_trigger fl-l ml12 mr8"})
+    for i in range(len(a)):
+        upcoming_link.append(a[i]["href"])
+        upcoming_title.append(a[i].img["alt"].replace("Anime: ", ""))
+
 class TocMachine(GraphMachine):
     def __init__(self, **machine_configs):
         self.machine = GraphMachine(model=self, **machine_configs)
@@ -81,14 +101,14 @@ class TocMachine(GraphMachine):
         self.go_back()
 
 # =================================================================
-# Update state
+# Search state
 
-    def is_going_to_update(self, event):
+    def is_going_to_search(self, event):
         text = event.message.text
-        return text.lower() == "update"
+        return text.lower() == "search"
 
-    def on_enter_update(self, event):
-        print("Enter update state")
+    def on_enter_search(self, event):
+        print("Enter search state")
         reply_token = event.reply_token
         send_text_message(reply_token, "Type in anime you want to look up")
 
@@ -166,10 +186,9 @@ class TocMachine(GraphMachine):
     def on_enter_repeatinfo(self, event):
         global interest
         print("Enter repeat info stage")
-        command = "Type " + str(interest) + " to back to info state"
+        command = "Type " + str(interest) + " to go back to info state"
         reply_token = event.reply_token
         send_text_message(reply_token, command)
-        #self.go_info()
 
 # =================================================================
 # info state
@@ -259,3 +278,38 @@ class TocMachine(GraphMachine):
         # message
         reply_token = event.reply_token
         send_text_message(reply_token, status)
+
+# =================================================================
+# top upcoming state
+
+    def is_going_to_upcoming(self, event):
+        text = event.message.text
+        return text.lower() == "upcoming"
+
+    def on_enter_upcoming(self, event):
+        global upcoming_title, upcoming_load
+
+        # search if not searched before
+        if(upcoming_load == 0):
+            anime_upcoming()
+            upcoming_load = 1
+
+        # show 10 titles each time and restart if reached the end
+        text = ""
+        number = upcoming_load
+        if(number >= 50):
+            number = 1
+            upcoming_load = 1
+        if(number < 50):
+            end = number * 10
+            start = end - 10
+            for i in range(start, end):
+                text += str(number) + ". " + upcoming_title[i]
+                if(i < end-1):
+                    text += "\n"
+                number += 1
+            upcoming_load += 1
+
+        # message
+        reply_token = event.reply_token
+        send_text_message(reply_token, text)
