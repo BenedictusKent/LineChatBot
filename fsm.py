@@ -88,29 +88,23 @@ class TocMachine(GraphMachine):
         self.machine = GraphMachine(model=self, **machine_configs)
 
 # =================================================================
-# Exit state
-
-    def is_going_to_quit(self, event):
-        text = event.message.text
-        return text.lower() == "quit"
-
-    def on_enter_quit(self, event):
-        print("Enter quit stage")
-        reply_token = event.reply_token
-        send_text_message(reply_token, "End")
-        self.go_back()
-
-# =================================================================
 # Search state
 
     def is_going_to_search(self, event):
         text = event.message.text
-        return text.lower() == "search"
+        return text.lower() == "search" or text.lower() == "quit"
 
     def on_enter_search(self, event):
-        print("Enter search state")
-        reply_token = event.reply_token
-        send_text_message(reply_token, "Type in anime you want to look up")
+        text = event.message.text
+
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "search"):
+            print("Enter search state")
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Type in anime you want to look up")
 
 # =================================================================
 # Title state
@@ -122,7 +116,7 @@ class TocMachine(GraphMachine):
     def on_enter_title(self, event):
         text = event.message.text
 
-        if(text.lower() == "back"):
+        if(text.lower() == "quit"):
             reply_token = event.reply_token
             send_text_message(reply_token, "Back to main")
             self.go_back()
@@ -155,40 +149,61 @@ class TocMachine(GraphMachine):
 
     def is_going_to_repeat(self, event):
         text = event.message.text
-        return text.lower() == "repeat"
+        return text.lower() == "repeat" or text.lower() == "quit"
 
     def on_enter_repeat(self, event):
-        print("Enter repeat stage")
-        reply_token = event.reply_token
-        send_text_message(reply_token, "Type in anime you want to look up")
+        text = event.message.text
+
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "repeat"):
+            print("Enter repeat stage")
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Type in anime you want to look up")
 
 # =================================================================
 # load_more state
 
     def is_going_to_load(self, event):
         text = event.message.text
-        return text.lower() == "more" or text.lower() == "load"
+        return text.lower() == "more" or text.lower() == "load" or text.lower() == "quit"
 
     def on_enter_load(self, event):
-        global bubble, img_url, title, link, load
-        load = 1
+        text = event.message.text
 
-        userid = event.source.user_id
-        send_button_carousel(userid, bubble, img_url, title, link, load)
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        else:
+            global bubble, img_url, title, link, load
+            load = 1
+
+            userid = event.source.user_id
+            send_button_carousel(userid, bubble, img_url, title, link, load)
 
 # =================================================================
 # goto info state
 
     def is_going_to_repeatinfo(self, event):
         text = event.message.text
-        return text.lower() == "info"
+        return text.lower() == "info" or text.lower() == "quit"
 
     def on_enter_repeatinfo(self, event):
-        global interest
-        print("Enter repeat info stage")
-        command = "Type " + str(interest) + " to go back to info state"
-        reply_token = event.reply_token
-        send_text_message(reply_token, command)
+        text = event.message.text
+
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "info"):
+            global interest
+            print("Enter repeat info stage")
+            command = "Type " + str(interest) + " to go back to info state"
+            reply_token = event.reply_token
+            send_text_message(reply_token, command)
 
 # =================================================================
 # info state
@@ -197,87 +212,115 @@ class TocMachine(GraphMachine):
         global interest
         text = event.message.text
         interest = int(text)
-        return text.isdigit() and interest < 10
+        return (text.isdigit() and interest < 10) or text.lower() == "quit"
 
     def on_enter_info(self, event):
-        global interest, img_url, title
-        label = ["Synopsis", "Status", "Schedule"]
-        chat = ["synopsis", "status", "schedule"]
-        image = img_url[interest]
-        name = title[interest]
-        userid = event.source.user_id
-        send_button_message(userid, image, name, label, chat)
+        text = event.message.text
+
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        else:
+            global interest, img_url, title
+            label = ["Synopsis", "Status", "Schedule"]
+            chat = ["synopsis", "status", "schedule"]
+            image = img_url[interest]
+            name = title[interest]
+            userid = event.source.user_id
+            send_button_message(userid, image, name, label, chat)
 
 # =================================================================
 # synopsis state
 
     def is_going_to_synopsis(self, event):
         text = event.message.text
-        return text.lower() == "synopsis"
+        return text.lower() == "synopsis" or text.lower() == "quit"
 
     def on_enter_synopsis(self, event):
-        global interest, link
-        req = Request(link[interest], headers={'User-Agent': 'Mozilla/5.0'})
-        client = urlopen(req)
-        htmlpage = client.read()
-        client.close()
-        wholepage = soup(htmlpage, "html.parser")
-        paragraph = wholepage.find("p", {"itemprop": "description"})
-        paragraph = paragraph.text
-        reply_token = event.reply_token
-        send_text_message(reply_token, paragraph)
+        text = event.message.text
+
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "synopsis"):
+            global interest, link
+            req = Request(link[interest], headers={'User-Agent': 'Mozilla/5.0'})
+            client = urlopen(req)
+            htmlpage = client.read()
+            client.close()
+            wholepage = soup(htmlpage, "html.parser")
+            paragraph = wholepage.find("p", {"itemprop": "description"})
+            paragraph = paragraph.text
+            reply_token = event.reply_token
+            send_text_message(reply_token, paragraph)
 
 # =================================================================
 # schedule state
 
     def is_going_to_schedule(self, event):
         text = event.message.text
-        return text.lower() == "schedule"
+        return text.lower() == "schedule" or text.lower() == "quit"
 
     def on_enter_schedule(self, event):
-        global interest, link, info
+        text = event.message.text
 
-        # if info not searched before, then search
-        if not info:
-            anime_info()
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "schedule"):
+            global interest, link, info
 
-        # look for appropriate item
-        sched = "No data found"
-        for i in range(len(info)):
-            if(info[i] == "Broadcast:"):
-                sched = info[i+1]
-                break
+            # if info not searched before, then search
+            if not info:
+                anime_info()
 
-        # message
-        reply_token = event.reply_token
-        send_text_message(reply_token, sched)
+            # look for appropriate item
+            sched = "No data found"
+            for i in range(len(info)):
+                if(info[i] == "Broadcast:"):
+                    sched = info[i+1]
+                    break
+
+            # message
+            reply_token = event.reply_token
+            send_text_message(reply_token, sched)
 
 # =================================================================
 # status state
 
     def is_going_to_status(self, event):
         text = event.message.text
-        return text.lower() == "status"
+        return text.lower() == "status" or text.lower() == "quit"
 
     def on_enter_status(self, event):
-        global interest, link, info
+        text = event.message.text
 
-        # if info not searched before, then search
-        if not info:
-            anime_info()
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "status"):
+            global interest, link, info
 
-        # look for appropriate item
-        for i in range(len(info)):
-            if(info[i] == "Status:"):
-                if ":" in info[i+1]:
-                    status = "No data found"
-                else:
-                    status = info[i+1]
-                break
+            # if info not searched before, then search
+            if not info:
+                anime_info()
 
-        # message
-        reply_token = event.reply_token
-        send_text_message(reply_token, status)
+            # look for appropriate item
+            for i in range(len(info)):
+                if(info[i] == "Status:"):
+                    if ":" in info[i+1]:
+                        status = "No data found"
+                    else:
+                        status = info[i+1]
+                    break
+
+            # message
+            reply_token = event.reply_token
+            send_text_message(reply_token, status)
 
 # =================================================================
 # top upcoming state
@@ -296,20 +339,49 @@ class TocMachine(GraphMachine):
 
         # show 10 titles each time and restart if reached the end
         text = ""
-        number = upcoming_load
-        if(number >= 50):
-            number = 1
-            upcoming_load = 1
-        if(number < 50):
-            end = number * 10
+        if(upcoming_load < 5):
+            end = upcoming_load * 10
             start = end - 10
             for i in range(start, end):
-                text += str(number) + ". " + upcoming_title[i]
+                text += str(i+1) + ". " + upcoming_title[i]
                 if(i < end-1):
                     text += "\n"
-                number += 1
             upcoming_load += 1
 
         # message
         reply_token = event.reply_token
         send_text_message(reply_token, text)
+
+# =================================================================
+# more upcoming state
+
+    def is_going_to_moreupcoming(self, event):
+        text = event.message.text
+        return text.lower() == "more" or text.lower() == "quit"
+
+    def on_enter_moreupcoming(self, event):
+        text = event.message.text
+        
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "more"):
+            global upcoming_title, upcoming_load
+
+            # show 10 titles each time and restart if reached the end
+            text = ""
+            if(upcoming_load == 6):
+                upcoming_load = 1
+            if(upcoming_load < 6):
+                end = upcoming_load * 10
+                start = end - 10
+                for i in range(start, end):
+                    text += str(i+1) + ". " + upcoming_title[i]
+                    if(i < end-1):
+                        text += "\n"
+                upcoming_load += 1
+
+            # message
+            reply_token = event.reply_token
+            send_text_message(reply_token, text)
