@@ -12,7 +12,7 @@ def send_text_message(reply_token, text):
     line_bot_api = LineBotApi(channel_access_token)
     line_bot_api.reply_message(reply_token, TextSendMessage(text=text))
 
-    return "OK"  
+    return "OK"
 
 def send_button_carousel(id, user_text, img_url, anime_title, next_link, load):
     line_bot_api = LineBotApi(channel_access_token)
