@@ -163,7 +163,6 @@ class TocMachine(GraphMachine):
         else:
             url = text.lower().replace(" ", "%20")
             search_url = "https://myanimelist.net/search/all?q=" + url + "&cat=all"
-            print(search_url)
 
             # check if user input has been checked previously
             global search, title, load, link, img_url, bubble
