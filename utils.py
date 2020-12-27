@@ -31,11 +31,14 @@ def send_button_carousel(id, user_text, img_url, anime_title, next_link, load):
 
     for i in range(number, end):
         temp = "Anime " + str(number+1)
+        if(len(anime_title[i]) < 49):
+            desc = temp + ": " + anime_title[i]
+        else:
+            desc = temp + ": " + anime_title[i][:50]
         cols.append(
             CarouselColumn(
                 thumbnail_image_url=img_url[number],
-                title=temp,
-                text=anime_title[i],
+                text=desc,
                 actions=[
                     MessageTemplateAction(
                         label='Learn more',
