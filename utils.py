@@ -3,7 +3,7 @@ from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as soup
 from linebot import LineBotApi, WebhookParser
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from linebot.models import CarouselTemplate, MessageTemplateAction, TemplateSendMessage, CarouselColumn, ButtonsTemplate
+from linebot.models import CarouselTemplate, MessageTemplateAction, TemplateSendMessage, CarouselColumn, ButtonsTemplate, ImageSendMessage
 
 channel_access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
 
@@ -93,11 +93,3 @@ def send_button_message(id, img_url, anime_title, label, chat):
 
     line_bot_api.push_message(id, message)
     return "OK"
-
-"""
-def send_image_url(id, img_url):
-    pass
-
-def send_button_message(id, text, buttons):
-    pass
-"""
