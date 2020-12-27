@@ -16,7 +16,7 @@ load_dotenv()
 machine = TocMachine(
     states=["main", "search", "title", "repeat", "load", "info", "synopsis",
             "schedule", "status", "repeatinfo", "upcoming", "moreupcoming",
-            "infofromupcoming", "date"],
+            "infofromupcoming", "date", "news", "morenews", "specific", "exitnews"],
     transitions=[
         {
             "trigger": "advance",
@@ -29,6 +29,36 @@ machine = TocMachine(
             "source": "main",
             "dest": "upcoming",
             "conditions": "is_going_to_upcoming",
+        },
+        {
+            "trigger": "advance",
+            "source": "main",
+            "dest": "news",
+            "conditions": "is_going_to_news",
+        },
+        {
+            "trigger": "advance",
+            "source": "news",
+            "dest": "morenews",
+            "conditions": "is_going_to_morenews",
+        },
+        {
+            "trigger": "advance",
+            "source": "morenews",
+            "dest": "morenews",
+            "conditions": "is_going_to_morenews",
+        },
+        {
+            "trigger": "advance",
+            "source": ["news", "morenews"],
+            "dest": "specific",
+            "conditions": "is_going_to_specific",
+        },
+        {
+            "trigger": "advance",
+            "source": "specific",
+            "dest": "exitnews",
+            "conditions": "is_going_to_exitnews",
         },
         {
             "trigger": "advance",
@@ -124,7 +154,8 @@ machine = TocMachine(
             "trigger": "go_back",
             "source": ["search", "info", "moreupcoming", "status", "schedule",
                        "synopsis", "repeatinfo", "load", "repeat", "title",
-                       "infofromupcoming", "date"],
+                       "infofromupcoming", "date", "news", "morenews", "specific",
+                       "exitnews"],
             "dest": "main",
         },
     ],
