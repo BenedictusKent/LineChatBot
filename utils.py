@@ -3,8 +3,7 @@ from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as soup
 from linebot import LineBotApi, WebhookParser
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from linebot.models import CarouselTemplate, MessageTemplateAction, TemplateSendMessage, CarouselColumn
-from linebot.models import ButtonsTemplate
+from linebot.models import CarouselTemplate, MessageTemplateAction, TemplateSendMessage, CarouselColumn, ButtonsTemplate
 
 channel_access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
 
