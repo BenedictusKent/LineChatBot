@@ -62,7 +62,6 @@ def anime_search(chat, search_url):
 
 def anime_info(search_url):
     global from_upcoming, from_search
-    #global link, interest, info
     # request to open url
     req = Request(search_url, headers={'User-Agent': 'Mozilla/5.0'})
     client = urlopen(req)
@@ -164,6 +163,7 @@ class TocMachine(GraphMachine):
         else:
             url = text.lower().replace(" ", "%20")
             search_url = "https://myanimelist.net/search/all?q=" + url + "&cat=all"
+            print(search_url)
 
             # check if user input has been checked previously
             global search, title, load, link, img_url, bubble
