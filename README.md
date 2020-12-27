@@ -13,25 +13,51 @@ All required packages are stated in ```Pipfile```.
 
 ## Features
 ### Search
-![pic1](/img/search/1.jpg)  
-![pic2](/img/search/2.jpg)  
-![pic3](/img/search/3.jpg)  
-![pic4](/img/search/4.jpg)  
-![pic5](/img/search/5.jpg)  
+<p align=center>
+    <img src="/img/search/1.jpg" width="240" height="340">
+</p>
+<p align=center>
+    <img src="/img/search/2.jpg" width="240" height="340">
+</p>
+<p align=center>
+    <img src="/img/search/3.jpg" width="240" height="340">
+</p>
+<p align=center>
+    <img src="/img/search/4.jpg" width="240" height="340">
+</p>
+<p align=center>
+    <img src="/img/search/5.jpg" width="240" height="340">
+</p>
 
 ### News  
-![pic1](/img/news/1.jpg)  
-![pic2](/img/news/2.jpg)  
-![pic3](/img/news/3.jpg)  
+<p align=center>
+    <img src="/img/news/1.jpg" width="240" height="340">
+</p>
+<p align=center>
+    <img src="/img/news/2.jpg" width="240" height="340">
+</p>
+<p align=center>
+    <img src="/img/news/3.jpg" width="240" height="340">
+</p>
 
 ### Upcoming
-![pic1](/img/upcoming/1.jpg)  
-![pic2](/img/upcoming/2.jpg)  
-![pic3](/img/upcoming/3.jpg)  
-![pic4](/img/upcoming/4.jpg)  
+<p align=center>
+    <img src="/img/upcoming/1.jpg" width="240" height="340">
+</p>
+<p align=center>
+    <img src="/img/upcoming/2.jpg" width="240" height="340">
+</p>
+<p align=center>
+    <img src="/img/upcoming/3.jpg" width="240" height="340">
+</p>
+<p align=center>
+    <img src="/img/upcoming/4.jpg" width="240" height="340">
+</p>
 
 ## Play with it!
-![qr code](/img/qr.png)
+<p align=center>
+    <img src="/img/qr.png" width="240" height="340">
+</p>
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
