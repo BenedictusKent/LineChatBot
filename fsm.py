@@ -220,7 +220,10 @@ class TocMachine(GraphMachine):
             self.go_back()
         else:
             global bubble, img_url, title, link, load
-            load = 1
+            if(load == 0):
+                load = 1
+            else:
+                load = 0
 
             userid = event.source.user_id
             send_button_carousel(userid, bubble, img_url, title, link, load)

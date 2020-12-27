@@ -82,19 +82,25 @@ machine = TocMachine(
             "trigger": "advance",
             "source": "title",
             "dest": "load",
-            "conditions": "is_going_to_load",       # title to load
+            "conditions": "is_going_to_load",
+        },
+        {
+            "trigger": "advance",
+            "source": "load",
+            "dest": "load",
+            "conditions": "is_going_to_load",
         },
         {
             "trigger": "advance",
             "source": ["title", "load"],
             "dest": "repeat",
-            "conditions": "is_going_to_repeat",     # title and load can repeat
+            "conditions": "is_going_to_repeat",
         },
         {
             "trigger": "advance",
             "source": "repeat",
             "dest": "title",
-            "conditions": "is_going_to_title",      # repeat to title 
+            "conditions": "is_going_to_title",
         },
         {
             "trigger": "advance",
