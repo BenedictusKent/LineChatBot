@@ -143,7 +143,7 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "Back to main")
             self.go_back()
         elif(text.lower() == "search"):
-            print("Enter search state")
+            #print("Enter search state")
             reply_token = event.reply_token
             send_text_message(reply_token, "Type in anime you want to look up")
 
@@ -200,7 +200,7 @@ class TocMachine(GraphMachine):
             send_text_message(reply_token, "Back to main")
             self.go_back()
         elif(text.lower() == "repeat"):
-            print("Enter repeat stage")
+            #print("Enter repeat stage")
             reply_token = event.reply_token
             send_text_message(reply_token, "Type in anime you want to look up")
 
@@ -241,7 +241,7 @@ class TocMachine(GraphMachine):
             self.go_back()
         elif(text.lower() == "info"):
             global interest, upcoming_interest, from_search, from_upcoming
-            print("Enter repeat info stage")
+            #print("Enter repeat info stage")
             if(from_search == 1):
                 command = "Type " + str(interest) + " to go back to info state"
             elif(from_upcoming == 1):
@@ -447,10 +447,8 @@ class TocMachine(GraphMachine):
             elif(from_search == 1):
                 global interest, link, info
                 # if info not searched before, then search
-                print(interest, link[interest])
                 if not info:
                     anime_info(link[interest])
-                print("passed here")
                 # look for appropriate item
                 for i in range(len(info)):
                     if(info[i] == "Aired:"):
