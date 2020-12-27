@@ -12,7 +12,8 @@ AniBot is LINE chat bot with features:
 All required packages are stated in ```Pipfile```.  
 
 ## Features
-### Search
+### Search  
+Browse and learn more about your favorite anime
 <p align=center>
     <img src="/img/search/1.jpg" width="240" height="480">
 </p>
@@ -30,6 +31,7 @@ All required packages are stated in ```Pipfile```.
 </p>
 
 ### News  
+Look up the latest news on anime 
 <p align=center>
     <img src="/img/news/1.jpg" width="240" height="480">
 </p>
@@ -40,7 +42,8 @@ All required packages are stated in ```Pipfile```.
     <img src="/img/news/3.jpg" width="240" height="480">
 </p>
 
-### Upcoming
+### Upcoming  
+List top 50 upcoming anime
 <p align=center>
     <img src="/img/upcoming/1.jpg" width="240" height="480">
 </p>
