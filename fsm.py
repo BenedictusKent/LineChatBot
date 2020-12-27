@@ -48,8 +48,15 @@ def anime_search(chat, search_url):
     wholepage = soup(htmlpage, "html.parser")
     divs = wholepage.findAll("div", {"class": "information di-tc va-t pt4 pl8"})      # num of searches
     for i in range(len(divs)):
-        title.append(divs[i].a.text.strip())
-        link.append(divs[i].a["href"])
+        name = divs[i].a.text.strip()
+        temp = quote(name.encode("unicode-escape"))
+        temp = unquote(temp)
+        title.append(temp)
+
+        url = divs[i].a["href"]
+        temp = quote(url.encode("unicode-escape"))
+        temp = unquote(temp)
+        link.append(temp)
     # better picture of filtered search
     for i in range(len(title)):
         req = Request(link[i], headers={'User-Agent': 'Mozilla/5.0'})
@@ -632,7 +639,7 @@ class TocMachine(GraphMachine):
             client.close()
             # parse html and find text location
             wholepage = soup(htmlpage, "html.parser")
-            paragraph = wholepage.find("img", {"class": "userimg img-a-r"})
+            paragraph = wholepage.find("div", {"class": "content clearfix"})
             text = paragraph.text.strip()
             # message
             reply_token = event.reply_token
