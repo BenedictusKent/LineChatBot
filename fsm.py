@@ -21,6 +21,11 @@ upcoming_more = 0
 upcoming_interest = -1
 from_upcoming = -1
 
+news_title = []
+news_clip = []
+news_link = []
+news_more = -1
+
 def variable_reset():
     global load, bubble, search, link, title, img_url
     load = 0
@@ -96,6 +101,25 @@ def anime_upcoming():
     for i in range(len(a)):
         upcoming_link.append(a[i]["href"])
         upcoming_title.append(a[i].img["alt"].replace("Anime: ", ""))
+
+def anime_news():
+    global news_clip, news_link, news_title
+    # request to open url
+    req = Request("https://myanimelist.net/", headers={'User-Agent': 'Mozilla/5.0'})
+    client = urlopen(req)
+    htmlpage = client.read()
+    client.close()
+    # parse html and go to article tag
+    wholepage = soup(htmlpage, "html.parser")
+    newspage = wholepage.findAll("div", {"class": "news-unit clearfix"})
+    for i in range(len(newspage) - 4):
+        # find h3
+        h = newspage[i].find("h3", {"class": "title news_h3"})
+        news_link.append(h.a["href"])
+        news_title.append(h.a.text.strip())
+        # find p
+        p = newspage[i].find("p")
+        news_clip.append(p.text.strip())
 
 class TocMachine(GraphMachine):
     def __init__(self, **machine_configs):
@@ -530,3 +554,104 @@ class TocMachine(GraphMachine):
             # message
             reply_token = event.reply_token
             send_text_message(reply_token, "Which anime are you interested? [number-1]")
+
+# =================================================================
+# news state
+
+    def is_going_to_news(self, event):
+        text = event.message.text
+        return text.lower() == "news" or text.lower() == "quit"
+
+    def on_enter_news(self, event):
+        text = event.message.text
+        
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "news"):
+            global news_more, news_link, news_clip, news_title
+            if(news_more == -1):
+                anime_news()
+                news_more = 0
+            if(news_more == 4):
+                news_more = 0
+            text = news_title[news_more] + "\n\n"
+            text += news_clip[news_more]
+            news_more += 1
+            # message
+            reply_token = event.reply_token
+            send_text_message(reply_token, text)
+
+# =================================================================
+# morenews state
+
+    def is_going_to_morenews(self, event):
+        text = event.message.text
+        return text.lower() == "read more" or text.lower() == "quit" or text.lower() == "more"
+
+    def on_enter_morenews(self, event):
+        text = event.message.text
+        
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        else:
+            global news_more, news_link, news_clip, news_title
+            if(news_more == 4):
+                news_more = 0
+            text = news_title[news_more] + "\n\n"
+            text += news_clip[news_more]
+            news_more += 1
+            # message
+            reply_token = event.reply_token
+            send_text_message(reply_token, text)
+
+# =================================================================
+# specific news state
+
+    def is_going_to_specific(self, event):
+        text = event.message.text
+        return text.lower() == "specific" or text.lower() == "quit"
+
+    def on_enter_specific(self, event):
+        text = event.message.text
+        
+        if(text.lower() == "quit"):
+            reply_token = event.reply_token
+            send_text_message(reply_token, "Back to main")
+            self.go_back()
+        elif(text.lower() == "specific"):
+            global news_more, news_link, news_clip, news_title
+            search_url = news_link[news_more-1]
+            # request to open url
+            req = Request(search_url, headers={'User-Agent': 'Mozilla/5.0'})
+            client = urlopen(req)
+            htmlpage = client.read()
+            client.close()
+            # parse html and find text location
+            wholepage = soup(htmlpage, "html.parser")
+            paragraph = wholepage.find("img", {"class": "userimg img-a-r"})
+            text = paragraph.text.strip()
+            # message
+            reply_token = event.reply_token
+            send_text_message(reply_token, text)
+
+# =================================================================
+# exit news state
+
+    def is_going_to_exitnews(self, event):
+        text = event.message.text
+        return text.lower() == "exit" or text.lower() == "quit"
+
+    def on_enter_exitnews(self, event):
+        global news_clip, news_link, news_more, news_title
+        # reset variables
+        news_title.clear()
+        news_link.clear()
+        news_clip.clear()
+        news_more = -1
+        reply_token = event.reply_token
+        send_text_message(reply_token, "Back to main")
+        self.go_back()
