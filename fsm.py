@@ -666,10 +666,10 @@ class TocMachine(GraphMachine):
 # =================================================================
 # exit news state
 
-    def is_going_to_exitnews(self, event):
+    def is_going_to_test(self, event):
         text = event.message.text
         return text.lower() == "test" or text.lower() == "quit"
 
-    def on_enter_exitnews(self, event):
+    def on_enter_test(self, event):
         reply_token = event.reply_token
         send_text_message(reply_token, "test success")
