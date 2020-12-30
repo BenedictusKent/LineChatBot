@@ -14,7 +14,7 @@ load_dotenv()
 
 
 machine = TocMachine(
-    states=["main", "search", "title", "repeat", "load", "info", "synopsis",
+    states=["main", "search", "title", "repeat", "load", "info", "synopsis", "test",
             "schedule", "status", "repeatinfo", "upcoming", "moreupcoming",
             "infofromupcoming", "date", "news", "morenews", "specific", "exitnews"],
     transitions=[
@@ -23,6 +23,12 @@ machine = TocMachine(
             "source": "main",
             "dest": "search",
             "conditions": "is_going_to_search",
+        },
+        {
+            "trigger": "advance",
+            "source": "main",
+            "dest": "test",
+            "conditions": "is_going_to_test",
         },
         {
             "trigger": "advance",
